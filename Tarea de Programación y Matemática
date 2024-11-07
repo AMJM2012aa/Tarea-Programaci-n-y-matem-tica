@@ -1,0 +1,74 @@
+import numpy as np
+import heapq
+
+class Grafo:
+    def __init__(self, num_nodos):
+        self.num_nodos = num_nodos
+        self.matriz_adyacencia = np.full((num_nodos, num_nodos), float('inf'))  # Inicializa con infinito
+        np.fill_diagonal(self.matriz_adyacencia, 0)  # Distancia a sí mismo es 0
+
+    def agregar_arista(self, origen, destino, peso):
+        self.matriz_adyacencia[origen][destino] = peso
+
+    def dijkstra(self, inicio):
+        distancias = [float('inf')] * self.num_nodos
+        distancias[inicio] = 0
+        padres = {nodo: None for nodo in range(self.num_nodos)}
+        cola_prioridad = [(0, inicio)]  # (distancia, nodo)
+        
+        while cola_prioridad:
+            distancia_actual, nodo_actual = heapq.heappop(cola_prioridad)
+            if distancia_actual > distancias[nodo_actual]:
+                continue
+
+            for vecino in range(self.num_nodos):
+                peso = self.matriz_adyacencia[nodo_actual][vecino]
+                if peso < float('inf'):  # Solo considerar nodos conectados
+                    distancia = distancia_actual + peso
+                    if distancia < distancias[vecino]:
+                        distancias[vecino] = distancia
+                        padres[vecino] = nodo_actual
+                        heapq.heappush(cola_prioridad, (distancia, vecino))
+        
+        return distancias, padres
+
+    def obtener_camino(self, inicio, fin, padres):
+        camino = []
+        actual = fin
+        while actual is not None:
+            camino.insert(0, actual)
+            actual = padres[actual]
+        return camino if camino[0] == inicio else []
+
+    def mostrar_matriz_adyacencia(self):
+        print("Matriz de Adyacencia:")
+        print(self.matriz_adyacencia)
+
+if __name__ == "__main__":
+    # Crear un grafo con 4 nodos (A=0, B=1, C=2, D=3)
+    g = Grafo(num_nodos=4)
+    
+    # Agregar aristas (origen, destino, peso)
+    g.agregar_arista(0, 1, 1)  # A -> B
+    g.agregar_arista(0, 2, 4)  # A -> C
+    g.agregar_arista(1, 2, 2)  # B -> C
+    g.agregar_arista(1, 3, 5)  # B -> D
+    g.agregar_arista(2, 3, 1)  # C -> D
+    
+    # Mostrar matriz de adyacencia
+    g.mostrar_matriz_adyacencia()
+    
+    # Encontrar y mostrar distancias desde el nodo inicial
+    inicio = 0  # Nodo inicial (A)
+    distancias, padres = g.dijkstra(inicio)
+    print(f"Distancias desde el nodo '{inicio}':")
+    for nodo in range(g.num_nodos):
+        print(f"Distancia a '{nodo}': {distancias[nodo]}")
+    
+    # Mostrar el camino más corto desde el nodo inicial hasta el nodo final y su coste
+    fin = 3  # Nodo final (D)
+    camino = g.obtener_camino(inicio, fin, padres)
+    if camino:
+        print(f"Camino más corto de '{inicio}' a '{fin}': {' -> '.join(map(str, camino))} con un coste de {distancias[fin]}")
+    else:
+        print(f"No hay camino de '{inicio}' a '{fin}'")
